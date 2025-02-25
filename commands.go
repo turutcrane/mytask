@@ -8,16 +8,15 @@ import (
 	"slices"
 )
 
-type Config struct {
+
+var Config struct {
 	RootDir string
 	CurDir  string
 }
 
-var MytaskConfig Config
-
 func Setup() {
-	flag.StringVar(&MytaskConfig.RootDir, "root", ".", "root directory")
-	flag.StringVar(&MytaskConfig.CurDir, "current", ".", "current directory")
+	flag.StringVar(&Config.RootDir, "root", ".", "root directory")
+	flag.StringVar(&Config.CurDir, "current", ".", "current directory")
 }
 
 // Command represents a Command that can be executed.
