@@ -17,6 +17,7 @@ var Config struct {
 func Setup() {
 	flag.StringVar(&Config.RootDir, "root", ".", "root directory")
 	flag.StringVar(&Config.CurDir, "current", ".", "current directory")
+	flag.Parse()
 }
 
 // Command represents a Command that can be executed.
