@@ -8,10 +8,6 @@ import (
 	"os/exec"
 )
 
-var (
-	RootDir string
-	CurDir  string
-)
 
 // Exec executes a command with the given name and arguments.
 func Exec(ctx context.Context, dir string, cmdLine ...string) error {
