@@ -34,34 +34,3 @@ func ExecInPipe(ctx context.Context, dir string, in io.Reader, cmdLine ...string
 
 	return out, nil
 }
-
-// func Setup(ctx context.Context) (context.Context, func()) {
-// 	signalCtx, clear := signal.NotifyContext(ctx, os.Interrupt)
-
-// 	// go func() {
-// 	// 	<-signalCtx.Done()
-// 	// 	if childPid.Load() != 0 {
-// 	// 		syscall.Kill(int(childPid.Load()), syscall.SIGINT)
-// 	// 	}
-// 	// }()
-
-// 	return signalCtx, clear
-// }
-
-// func pipeSample(ctx context.Context) {
-// 	awsProfile := "myprofile"
-// 	awsRegion := "us-west-2"
-// 	ecrDomain := "123456789012.dkr.ecr.us-west-2.amazonaws.com"
-// 	AddCmd("login", func(args []string) ([]string, error) {
-// 		pipe, err := ExecInPipe(ctx, "", os.Stdin, "aws", "ecr", "--profile", awsProfile, "get-login-password", "--region", awsRegion)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		out, err := ExecInPipe(ctx, "", pipe, "docker", "login", "--username", "AWS", "--password-stdin", ecrDomain)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		fmt.Println(out)
-// 		return nil
-// 	})
-// }

@@ -1,6 +1,7 @@
 package mytask
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"maps"
@@ -23,18 +24,18 @@ func Setup() {
 // Command represents a Command that can be executed.
 type Command struct {
 	key    string
-	action func(args []string) ([]string, error)
+	action func(ctx context.Context, args []string) ([]string, error)
 }
 
-func (cmd Command) Do(args []string) ([]string, error) {
-	return cmd.action(args)
+func (cmd Command) Do(ctx context.Context, args []string) ([]string, error) {
+	return cmd.action(ctx, args)
 }
 
 var (
 	cmdList = map[string]Command{}
 )
 
-func AddCmd(key string, cmd func([]string) ([]string, error)) {
+func AddCmd(key string, cmd func(context.Context, []string) ([]string, error)) {
 	cmdList[key] = Command{
 		key:    key,
 		action: cmd,
@@ -45,7 +46,7 @@ func GetTask(key string) (Command, bool) {
 	if key == "help" || key == "" {
 		return Command{
 			key: "help",
-			action: func(args []string) ([]string, error) {
+			action: func(_ context.Context, args []string) ([]string, error) {
 				verbs := []string{"help"}
 				verbs = slices.AppendSeq(verbs, maps.Keys(cmdList))
 				fmt.Fprintln(os.Stderr, "Help:", verbs)
@@ -61,7 +62,7 @@ func GetTask(key string) (Command, bool) {
 	return Command{}, false
 }
 
-func RunTasks(args []string) error {
+func RunTasks(ctx context.Context, args []string) error {
 	if len(args) == 0 {
 		args = append(args, "help")
 	}
@@ -70,7 +71,7 @@ func RunTasks(args []string) error {
 		cmd, ok := GetTask(args[0])
 		if ok {
 			var err error
-			args, err = cmd.Do(args[1:])
+			args, err = cmd.Do(ctx, args[1:])
 			if err != nil {
 				return err
 			}

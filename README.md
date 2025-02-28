@@ -1,2 +1,2 @@
 # mytask
-Library for making task runner app
+A Helper Library for Task Runner.
