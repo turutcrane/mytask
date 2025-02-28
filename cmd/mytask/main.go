@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -11,11 +12,13 @@ import (
 	"github.com/turutcrane/mytask"
 )
 
+var verbose = flag.Bool("v", false, "verbose flag")
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
-	args := os.Args
+	flag.Parse()
+	args := flag.Args()
 	if err := doMytask(ctx, args); err != nil {
 		log.Fatalln(err)
 	}
@@ -42,7 +45,10 @@ func doMytask(ctx context.Context, args []string) error {
 		mytaskPath := filepath.Join(abs, "mytask")
 		if d, err := os.Stat(mytaskPath); err == nil {
 			if d.IsDir() {
-				cmdLine := append([]string{"go", "run", ".", "-root", abs, "-current", pwd}, args[1:]...)
+				if *verbose {
+					log.Println("Mytask Path", mytaskPath)
+				}
+				cmdLine := append([]string{"go", "run", ".", "-root", abs, "-current", pwd}, args...)
 				return mytask.Exec(ctx, mytaskPath, cmdLine...)
 			}
 		}
