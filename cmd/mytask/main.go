@@ -13,35 +13,42 @@ import (
 )
 
 var verbose = flag.Bool("v", false, "verbose flag")
+
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()
 
 	flag.Parse()
 	args := flag.Args()
+
 	if err := doMytask(ctx, args); err != nil {
 		log.Fatalln(err)
 	}
 }
 
 func doMytask(ctx context.Context, args []string) error {
-	// check existence of the file mytask.go
-	if _, err := os.Stat("mytask.go"); err == nil {
-		cmdLine := append([]string{"go", "run", "-tags", "mytask", "./mytask.go"}, args[1:]...)
-		return mytask.Exec(ctx, "", cmdLine...)
-	}
-
-	// check existence of the mytask directory
 	pwd, err := os.Getwd()
 	if err != nil {
-		return fmt.Errorf("T36: Error: %w", err)
-	}
-	abs, err := filepath.Abs(pwd)
-	if err != nil {
-		return fmt.Errorf("T41: Error: %w", err)
+		return fmt.Errorf("T32: Error: %w", err)
 	}
 
-	for ; abs != "/"; abs = filepath.Clean(abs + "/..") {
+	abs, err := filepath.Abs(pwd)
+	if err != nil {
+		return fmt.Errorf("T37: Error: %w", err)
+	}
+
+	for {
+		// check existence of the file mytask.go
+		mytaskGo := filepath.Join(abs, "mytask.go")
+		if _, err0 := os.Stat(mytaskGo); err0 == nil {
+			if *verbose {
+				log.Println("mytask.go Path", mytaskGo)
+			}
+			cmdLine := append([]string{"go", "run", "-tags", "mytask", "./mytask.go", "-root", abs, "-current", pwd}, args...)
+			return mytask.Exec(ctx, abs, cmdLine...)
+		}
+
+		// check existence of the mytask directory
 		mytaskPath := filepath.Join(abs, "mytask")
 		if d, err := os.Stat(mytaskPath); err == nil {
 			if d.IsDir() {
@@ -52,6 +59,10 @@ func doMytask(ctx context.Context, args []string) error {
 				return mytask.Exec(ctx, mytaskPath, cmdLine...)
 			}
 		}
+		if abs == "/" {
+			break
+		}
+		abs = filepath.Clean(abs + "/..")
 	}
-	return nil
+	return fmt.Errorf("T67: Error: mytask.go or mytask directory not found")
 }
