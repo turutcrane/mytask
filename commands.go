@@ -4,9 +4,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"maps"
+	// "maps"
 	"os"
-	"slices"
+	// "slices"
 )
 
 
@@ -48,7 +48,10 @@ func GetCommand(key string) (Command, bool) {
 			key: "help",
 			action: func(_ context.Context, args []string) ([]string, error) {
 				verbs := []string{"help"}
-				verbs = slices.AppendSeq(verbs, maps.Keys(cmdList))
+				// verbs = slices.AppendSeq(verbs, maps.Keys(cmdList))
+				for k := range cmdList {
+					verbs = append(verbs, k)
+				}
 				fmt.Fprintln(os.Stderr, "Help:", verbs)
 				return args, nil
 			},
