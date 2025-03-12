@@ -35,14 +35,14 @@ var (
 	cmdList = map[string]Command{}
 )
 
-func AddCmd(key string, cmd func(context.Context, []string) ([]string, error)) {
+func AddCommand(key string, cmd func(context.Context, []string) ([]string, error)) {
 	cmdList[key] = Command{
 		key:    key,
 		action: cmd,
 	}
 }
 
-func GetTask(key string) (Command, bool) {
+func GetCommand(key string) (Command, bool) {
 	if key == "help" || key == "" {
 		return Command{
 			key: "help",
@@ -68,7 +68,7 @@ func RunTasks(ctx context.Context, args []string) error {
 	}
 
 	for len(args) > 0 {
-		cmd, ok := GetTask(args[0])
+		cmd, ok := GetCommand(args[0])
 		if ok {
 			var err error
 			args, err = cmd.Do(ctx, args[1:])
