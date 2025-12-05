@@ -13,11 +13,13 @@ import (
 var Config struct {
 	RootDir string
 	CurDir  string
+	TaskDir string
 }
 
 func Setup() {
 	flag.StringVar(&Config.RootDir, "root", ".", "root directory")
 	flag.StringVar(&Config.CurDir, "current", ".", "current directory")
+	flag.StringVar(&Config.TaskDir, "task", "./mytask", "task directory")
 	flag.Parse()
 }
 

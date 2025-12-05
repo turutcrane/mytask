@@ -9,10 +9,15 @@ import (
 	"os/signal"
 	"path/filepath"
 
+	"github.com/BurntSushi/toml"
 	"github.com/turutcrane/mytask"
 )
 
 var verbose = flag.Bool("v", false, "verbose flag")
+
+type mytaskToml struct {
+	MytaskDir string `toml:"mytask_dir"`
+}
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -39,25 +44,39 @@ func doMytask(ctx context.Context, args []string) error {
 
 	for {
 		// check existence of the file mytask.go
-		mytaskGo := filepath.Join(abs, "mytask.go")
-		if _, err0 := os.Stat(mytaskGo); err0 == nil {
+		// mytaskGo := filepath.Join(abs, "mytask.go")
+		// if _, err0 := os.Stat(mytaskGo); err0 == nil {
+		// 	if *verbose {
+		// 		log.Println("mytask.go Path", mytaskGo)
+		// 	}
+		// 	cmdLine := append([]string{"go", "run", "-tags", "mytask", "./mytask.go", "-root", abs, "-current", pwd}, args...)
+		// 	return mytask.Exec(ctx, abs, cmdLine...)
+		// }
+
+		tomlFile := filepath.Join(abs, "mytask.toml")
+		if _, err0 := os.Stat(tomlFile); err0 == nil {
 			if *verbose {
-				log.Println("mytask.go Path", mytaskGo)
+				log.Println("mytask.toml Path", tomlFile)
 			}
-			cmdLine := append([]string{"go", "run", "-tags", "mytask", "./mytask.go", "-root", abs, "-current", pwd}, args...)
-			return mytask.Exec(ctx, abs, cmdLine...)
+			// toml ファイルを parse する。
+			var mt mytaskToml
+			if _, err := toml.DecodeFile(tomlFile, &mt); err != nil {
+				return fmt.Errorf("T49: Error: %w", err)
+			}
+			if d, err := os.Stat(mt.MytaskDir); err == nil && d.IsDir() {
+				return mytaskDo(ctx, mt.MytaskDir, abs, pwd, args)
+			} else {
+				if err != nil {
+					return fmt.Errorf("T52: Error: %w", err)
+				}
+				return fmt.Errorf("T53: Error: %s is not directory", mt.MytaskDir)
+			}
 		}
 
 		// check existence of the mytask directory
 		mytaskPath := filepath.Join(abs, "mytask")
-		if d, err := os.Stat(mytaskPath); err == nil {
-			if d.IsDir() {
-				if *verbose {
-					log.Println("Mytask Path", mytaskPath)
-				}
-				cmdLine := append([]string{"go", "run", ".", "-root", abs, "-current", pwd}, args...)
-				return mytask.Exec(ctx, mytaskPath, cmdLine...)
-			}
+		if d, err := os.Stat(mytaskPath); err == nil && d.IsDir() {
+			return mytaskDo(ctx, mytaskPath, abs, pwd, args)
 		}
 		if abs == "/" {
 			break
@@ -65,4 +84,12 @@ func doMytask(ctx context.Context, args []string) error {
 		abs = filepath.Clean(abs + "/..")
 	}
 	return fmt.Errorf("T67: Error: mytask.go or mytask directory not found")
+}
+
+func mytaskDo(ctx context.Context, mytaskDir, abs, pwd string, args []string) error {
+	if *verbose {
+		log.Println("Mytask Path", mytaskDir)
+	}
+	cmdLine := append([]string{"go", "run", ".", "-root", abs, "-current", pwd, "-task", mytaskDir}, args...)
+	return mytask.Exec(ctx, mytaskDir, cmdLine...)
 }
