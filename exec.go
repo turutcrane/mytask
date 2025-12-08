@@ -1,17 +1,14 @@
 package mytask
 
 import (
-	"bytes"
 	"context"
 	"io"
 	"os"
 	"os/exec"
 )
 
-
 // Exec executes a command with the given name and arguments.
 func Exec(ctx context.Context, dir string, cmdLine ...string) error {
-
 	return ExecEnv(ctx, dir, nil, cmdLine...)
 }
 
@@ -22,7 +19,7 @@ func ExecEnv(ctx context.Context, dir string, env []string, cmdLine ...string) e
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Dir = dir
-	if env !=nil {
+	if env != nil {
 		e := os.Environ()
 		cmd.Env = append(e, env...)
 	}
@@ -30,27 +27,26 @@ func ExecEnv(ctx context.Context, dir string, env []string, cmdLine ...string) e
 	return cmd.Run()
 }
 
-// ExecInPipe executes cmdLine with in as Stdin
-func ExecInPipe(ctx context.Context, dir string, in io.Reader, cmdLine ...string) (io.Reader, error) {
-
-	return ExecInPipeEnv(ctx, dir, in, nil, cmdLine ...)
+func ExecPipe(ctx context.Context, dir string, in io.Reader, cmdLine ...string) (io.ReadCloser, error) {
+	return ExecEnvPipe(ctx, dir, in, nil, cmdLine...)
 }
 
-// ExecInPipeEnv executes cmdLine with in as Stdin and environment values
-func ExecInPipeEnv(ctx context.Context, dir string, in io.Reader, env []string,  cmdLine ...string) (io.Reader, error) {
-	out := &bytes.Buffer{}
+// Exec executes a command with the given name, arguments and environment values. return pipe
+func ExecEnvPipe(ctx context.Context, dir string, in io.Reader, env []string, cmdLine ...string) (io.ReadCloser, error) {
 	cmd := exec.CommandContext(ctx, cmdLine[0], cmdLine[1:]...)
 	cmd.Stdin = in
-	cmd.Stdout = out
 	cmd.Stderr = os.Stderr
 	cmd.Dir = dir
-	if env !=nil {
+	if env != nil {
 		e := os.Environ()
 		cmd.Env = append(e, env...)
 	}
-	if err := cmd.Run(); err != nil {
+	if p, err := cmd.StdoutPipe(); err == nil {
+		if err0 := cmd.Start(); err0 != nil {
+			return nil, err0
+		}
+		return p, nil
+	} else {
 		return nil, err
 	}
-
-	return out, nil
 }

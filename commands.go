@@ -4,20 +4,19 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	// "maps"
 	"os"
-	// "slices"
 )
 
-
 var Config struct {
-	RootDir string
-	CurDir  string
-	TaskDir string
+	RootDir  string
+	TomlPath string
+	CurDir   string
+	TaskDir  string
 }
 
 func Setup() {
 	flag.StringVar(&Config.RootDir, "root", ".", "root directory")
+	flag.StringVar(&Config.TomlPath, "toml", "", "toml filepath")
 	flag.StringVar(&Config.CurDir, "current", ".", "current directory")
 	flag.StringVar(&Config.TaskDir, "task", "./mytask", "task directory")
 	flag.Parse()

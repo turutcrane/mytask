@@ -32,12 +32,12 @@ func main() {
 }
 
 func doMytask(ctx context.Context, args []string) error {
-	pwd, err := os.Getwd()
+	cur, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("T32: Error: %w", err)
 	}
 
-	abs, err := filepath.Abs(pwd)
+	root, err := filepath.Abs(cur)
 	if err != nil {
 		return fmt.Errorf("T37: Error: %w", err)
 	}
@@ -53,7 +53,7 @@ func doMytask(ctx context.Context, args []string) error {
 		// 	return mytask.Exec(ctx, abs, cmdLine...)
 		// }
 
-		tomlFile := filepath.Join(abs, "mytask.toml")
+		tomlFile := filepath.Join(root, "mytask.toml")
 		if _, err0 := os.Stat(tomlFile); err0 == nil {
 			if *verbose {
 				log.Println("mytask.toml Path", tomlFile)
@@ -63,8 +63,13 @@ func doMytask(ctx context.Context, args []string) error {
 			if _, err := toml.DecodeFile(tomlFile, &mt); err != nil {
 				return fmt.Errorf("T49: Error: %w", err)
 			}
-			if d, err := os.Stat(mt.MytaskDir); err == nil && d.IsDir() {
-				return mytaskDo(ctx, mt.MytaskDir, abs, pwd, args)
+			mytaskDir := mt.MytaskDir
+			if !filepath.IsAbs(mytaskDir) {
+				mytaskDir = filepath.Join(root, mytaskDir)
+			}
+			mytaskDir = filepath.Clean(mytaskDir)
+			if d, err := os.Stat(mytaskDir); err == nil && d.IsDir() {
+				return mytaskDo(ctx, tomlFile, mytaskDir, root, cur, args)
 			} else {
 				if err != nil {
 					return fmt.Errorf("T52: Error: %w", err)
@@ -74,22 +79,22 @@ func doMytask(ctx context.Context, args []string) error {
 		}
 
 		// check existence of the mytask directory
-		mytaskPath := filepath.Join(abs, "mytask")
+		mytaskPath := filepath.Join(root, "mytask")
 		if d, err := os.Stat(mytaskPath); err == nil && d.IsDir() {
-			return mytaskDo(ctx, mytaskPath, abs, pwd, args)
+			return mytaskDo(ctx, "", mytaskPath, root, cur, args)
 		}
-		if abs == "/" {
+		if root == "/" {
 			break
 		}
-		abs = filepath.Clean(abs + "/..")
+		root = filepath.Clean(root + "/..")
 	}
 	return fmt.Errorf("T67: Error: mytask.go or mytask directory not found")
 }
 
-func mytaskDo(ctx context.Context, mytaskDir, abs, pwd string, args []string) error {
+func mytaskDo(ctx context.Context, tomlfile, mytaskDir, root, pwd string, args []string) error {
 	if *verbose {
 		log.Println("Mytask Path", mytaskDir)
 	}
-	cmdLine := append([]string{"go", "run", ".", "-root", abs, "-current", pwd, "-task", mytaskDir}, args...)
+	cmdLine := append([]string{"go", "run", ".", "-toml", tomlfile, "-root", root, "-current", pwd, "-task", mytaskDir}, args...)
 	return mytask.Exec(ctx, mytaskDir, cmdLine...)
 }
