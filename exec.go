@@ -41,12 +41,12 @@ func ExecPipeEnv(ctx context.Context, dir string, in io.Reader, env []string, cm
 		e := os.Environ()
 		cmd.Env = append(e, env...)
 	}
-	if p, err := cmd.StdoutPipe(); err == nil {
-		if err0 := cmd.Start(); err0 != nil {
-			return nil, nil, err0
-		}
-		return cmd, p, nil
-	} else {
+
+	if p, err := cmd.StdoutPipe(); err != nil {
 		return nil, nil, err
+	} else if err := cmd.Start(); err != nil {
+		return nil, nil, err
+	} else {
+		return cmd, p, nil
 	}
 }
