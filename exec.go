@@ -27,12 +27,12 @@ func ExecEnv(ctx context.Context, dir string, env []string, cmdLine ...string) e
 	return cmd.Run()
 }
 
-func ExecPipe(ctx context.Context, dir string, in io.Reader, cmdLine ...string) (io.ReadCloser, error) {
-	return ExecEnvPipe(ctx, dir, in, nil, cmdLine...)
+func ExecPipe(ctx context.Context, dir string, in io.Reader, cmdLine ...string) (*exec.Cmd, io.ReadCloser, error) {
+	return ExecPipeEnv(ctx, dir, in, nil, cmdLine...)
 }
 
 // Exec executes a command with the given name, arguments and environment values. return pipe
-func ExecEnvPipe(ctx context.Context, dir string, in io.Reader, env []string, cmdLine ...string) (io.ReadCloser, error) {
+func ExecPipeEnv(ctx context.Context, dir string, in io.Reader, env []string, cmdLine ...string) (*exec.Cmd, io.ReadCloser, error) {
 	cmd := exec.CommandContext(ctx, cmdLine[0], cmdLine[1:]...)
 	cmd.Stdin = in
 	cmd.Stderr = os.Stderr
@@ -43,10 +43,10 @@ func ExecEnvPipe(ctx context.Context, dir string, in io.Reader, env []string, cm
 	}
 	if p, err := cmd.StdoutPipe(); err == nil {
 		if err0 := cmd.Start(); err0 != nil {
-			return nil, err0
+			return nil, nil, err0
 		}
-		return p, nil
+		return cmd, p, nil
 	} else {
-		return nil, err
+		return nil, nil, err
 	}
 }
