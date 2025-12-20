@@ -7,19 +7,12 @@ import (
 	"os"
 )
 
-var Config struct {
-	RootDir  string
-	TomlPath string
-	CurDir   string
-	TaskDir  string
-}
-
-func Setup() {
-	flag.StringVar(&Config.RootDir, "root", ".", "root directory")
-	flag.StringVar(&Config.TomlPath, "toml", "", "toml filepath")
-	flag.StringVar(&Config.CurDir, "current", ".", "current directory")
-	flag.StringVar(&Config.TaskDir, "task", "./mytask", "task directory")
+func Setup() (Config, error) {
+	var tomlPath, curDir string
+	flag.StringVar(&tomlPath, "toml", "", "toml filepath")
+	flag.StringVar(&curDir, "current", ".", "current directory")
 	flag.Parse()
+	return SetupConfig(curDir, tomlPath)
 }
 
 // Command represents a Command that can be executed.
@@ -86,3 +79,4 @@ func RunTasks(ctx context.Context, args []string) error {
 
 	return nil
 }
+
