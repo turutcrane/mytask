@@ -40,26 +40,26 @@ func SetupConfig(curDir, tomlFile string) (Config, error) {
 	var c Config
 	c.curDir = curDir
 	c.tomlPath = tomlFile
+	tomlDir := filepath.Dir(tomlFile)
 
 	// toml ファイルを parse する。
 	var mt mytaskToml
 	if _, err := toml.DecodeFile(tomlFile, &mt); err != nil {
 		return Config{}, fmt.Errorf("T49: Error: %w", err)
 	}
-	root := mt.RootDir
-	if root == "" {
-		root = filepath.Dir(tomlFile)
-	}
-	c.rootDir = root
 
-	mytaskDir := mt.MytaskDir
-	if mytaskDir == "" {
-		if !filepath.IsAbs(mytaskDir) {
-			mytaskDir = filepath.Join(c.rootDir, mytaskDir)
-		}
-		mytaskDir = filepath.Clean(mytaskDir)
-	}
-	c.taskDir = mytaskDir
+	c.taskDir = dirAbsPath(tomlDir, mt.MytaskDir)
+	c.rootDir = dirAbsPath(tomlDir, mt.RootDir)
 
 	return c, nil
+}
+
+func dirAbsPath(tomlDir, dir string) string {
+	if dir == "" {
+		dir = tomlDir
+	}
+	if !filepath.IsAbs(dir) {
+		dir = filepath.Join(tomlDir, dir)
+	}
+	return filepath.Clean(dir)
 }

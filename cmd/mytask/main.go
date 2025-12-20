@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -51,14 +52,16 @@ func doMytask(ctx context.Context, args []string) error {
 		tomlFile := filepath.Join(root, "mytask.toml")
 		if _, err0 := os.Stat(tomlFile); err0 == nil {
 			if *verbose {
-				log.Println("mytask.toml Path", tomlFile)
+				slog.Info("mytask:", slog.String("mytask.toml", tomlFile))
 			}
 			var c mytask.Config
 			var err error
-			if c, err =mytask.SetupConfig(curDir, tomlFile); err != nil {
+			if c, err = mytask.SetupConfig(curDir, tomlFile); err != nil {
 				return fmt.Errorf("T48: Error: %w", err)
 			}
-			
+			if *verbose {
+				slog.Info("mytask:", slog.Any("config", c))
+			}
 			if d, err := os.Stat(c.GetTaskDir()); err == nil && d.IsDir() {
 				return mytaskDo(ctx, c, args)
 			} else {
@@ -84,7 +87,7 @@ func doMytask(ctx context.Context, args []string) error {
 
 func mytaskDo(ctx context.Context, c mytask.Config, args []string) error {
 	if *verbose {
-		log.Println("Mytask Path", c.GetTaskDir())
+		slog.Info("mytask:", slog.String("task dir", c.GetTaskDir()))
 	}
 	cmdLine := append([]string{"go", "run", ".", "-toml", c.GetTomlPath(), "-current", c.GetCurDir()}, args...)
 	return mytask.Exec(ctx, c.GetTaskDir(), cmdLine...)
