@@ -35,8 +35,8 @@ func (c Config) GetTomlPath() string {
 	return c.tomlPath
 }
 
-// SetupConfig tomlPath は絶対パス
-func SetupConfig(curDir, tomlFile string) (Config, error) {
+// ParseConfig tomlPath は絶対パス
+func ParseConfig(curDir, tomlFile string) (Config, error) {
 	var c Config
 	c.curDir = curDir
 	c.tomlPath = tomlFile

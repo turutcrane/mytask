@@ -56,7 +56,7 @@ func doMytask(ctx context.Context, args []string) error {
 			}
 			var c mytask.Config
 			var err error
-			if c, err = mytask.SetupConfig(curDir, tomlFile); err != nil {
+			if c, err = mytask.ParseConfig(curDir, tomlFile); err != nil {
 				return fmt.Errorf("T48: Error: %w", err)
 			}
 			if *verbose {

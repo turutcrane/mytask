@@ -7,12 +7,12 @@ import (
 	"os"
 )
 
-func Setup() (Config, error) {
+func GetConfig() (Config, error) {
 	var tomlPath, curDir string
 	flag.StringVar(&tomlPath, "toml", "", "toml filepath")
 	flag.StringVar(&curDir, "current", ".", "current directory")
 	flag.Parse()
-	return SetupConfig(curDir, tomlPath)
+	return ParseConfig(curDir, tomlPath)
 }
 
 // Command represents a Command that can be executed.
