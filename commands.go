@@ -37,31 +37,22 @@ func AddCommand(key string, cmd func(context.Context, []string) ([]string, error
 }
 
 func GetCommand(key string) (Command, bool) {
-	if key == "help" || key == "" {
-		return Command{
-			key: "help",
-			action: func(_ context.Context, args []string) ([]string, error) {
-				verbs := []string{"help"}
-				// verbs = slices.AppendSeq(verbs, maps.Keys(cmdList))
-				for k := range cmdList {
-					verbs = append(verbs, k)
-				}
-				fmt.Fprintln(os.Stderr, "Help:", verbs)
-				return args, nil
-			},
-		}, true
-	}
-
 	cmd, ok := cmdList[key]
-	if ok {
-		return cmd, ok
+	return cmd, ok
+}
+
+func HelpVerbList(_ context.Context, args []string) ([]string, error) {
+	verbs := []string{}
+	for k := range cmdList {
+		verbs = append(verbs, k)
 	}
-	return Command{}, false
+	fmt.Fprintln(os.Stderr, "Help:", verbs)
+	return args, nil
 }
 
 func RunTasks(ctx context.Context, args []string) error {
 	if len(args) == 0 {
-		args = append(args, "help")
+		args = []string{"help"}
 	}
 
 	for len(args) > 0 {
@@ -72,8 +63,10 @@ func RunTasks(ctx context.Context, args []string) error {
 			if err != nil {
 				return err
 			}
+		} else if args[0] == "help" {
+			args, _ = HelpVerbList(ctx, args[1:])
 		} else {
-			return fmt.Errorf("T110: Error: %s is not a valid command", args[0])
+			return fmt.Errorf("mytask: Error: %s is not a valid command", args[0])
 		}
 	}
 
