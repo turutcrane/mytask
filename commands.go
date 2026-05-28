@@ -5,10 +5,12 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 )
 
 func GetConfig() (Config, error) {
 	var tomlPath, curDir string
+
 	flag.StringVar(&tomlPath, "toml", "", "toml filepath")
 	flag.StringVar(&curDir, "current", ".", "current directory")
 	flag.Parse()
@@ -41,11 +43,16 @@ func GetCommand(key string) (Command, bool) {
 	return cmd, ok
 }
 
-func HelpVerbList(_ context.Context, args []string) ([]string, error) {
+func GetVerbList() []string {
 	verbs := []string{}
 	for k := range cmdList {
 		verbs = append(verbs, k)
 	}
+	return verbs
+}
+
+func HelpVerbList(_ context.Context, args []string) ([]string, error) {
+	verbs := GetVerbList()
 	fmt.Fprintln(os.Stderr, "Help:", verbs)
 	return args, nil
 }
@@ -71,4 +78,18 @@ func RunTasks(ctx context.Context, args []string) error {
 	}
 
 	return nil
+}
+
+func Completion(args []string) {
+	if len(args) < 2 {
+		return
+	}
+	// command := args[0]
+	hint := flag.Arg(1)
+	// prevArg := flag.Arg(2)
+	for _, verb := range GetVerbList() {
+		if strings.HasPrefix(verb, hint) {
+			fmt.Println(verb)
+		}
+	}
 }

@@ -8,15 +8,17 @@ import (
 )
 
 type Config struct {
-	rootDir  string
-	tomlPath string
-	curDir   string
-	taskDir  string
+	rootDir        string
+	tomlPath       string
+	curDir         string
+	taskDir        string
+	completionMode string
 }
 
 type mytaskToml struct {
-	MytaskDir string `toml:"mytask_dir"`
-	RootDir   string `toml:"root_dir"`
+	MytaskDir  string `toml:"mytask_dir"`
+	RootDir    string `toml:"root_dir"`
+	Completion string `toml:"completion"`
 }
 
 func (c Config) GetRootDir() string {
@@ -35,6 +37,10 @@ func (c Config) GetTomlPath() string {
 	return c.tomlPath
 }
 
+func (c Config) GetCompletion() string {
+	return c.completionMode
+}
+
 // ParseConfig tomlPath は絶対パス
 func ParseConfig(curDir, tomlFile string) (Config, error) {
 	var c Config
@@ -50,7 +56,7 @@ func ParseConfig(curDir, tomlFile string) (Config, error) {
 
 	c.taskDir = dirAbsPath(tomlDir, mt.MytaskDir)
 	c.rootDir = dirAbsPath(tomlDir, mt.RootDir)
-
+	c.completionMode = mt.Completion
 	return c, nil
 }
 

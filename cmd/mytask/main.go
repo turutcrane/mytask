@@ -14,6 +14,7 @@ import (
 )
 
 var verbose = flag.Bool("v", false, "verbose flag")
+var completion = flag.Bool("completion", false, "completion flag for complete -C 'mytask -complete' mytask")
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -63,7 +64,7 @@ func doMytask(ctx context.Context, args []string) error {
 				slog.Info("mytask:", slog.Any("config", c))
 			}
 			if d, err := os.Stat(c.GetTaskDir()); err == nil && d.IsDir() {
-				return mytaskDo(ctx, c, args)
+				return mytaskExec(ctx, c, args)
 			} else {
 				if err != nil {
 					return fmt.Errorf("T52: Error: %w", err)
@@ -85,10 +86,18 @@ func doMytask(ctx context.Context, args []string) error {
 	return fmt.Errorf("T67: Error: mytask.go or mytask directory not found")
 }
 
-func mytaskDo(ctx context.Context, c mytask.Config, args []string) error {
+func mytaskExec(ctx context.Context, c mytask.Config, args []string) error {
 	if *verbose {
 		slog.Info("mytask:", slog.String("task dir", c.GetTaskDir()))
 	}
-	cmdLine := append([]string{"go", "run", ".", "-toml", c.GetTomlPath(), "-current", c.GetCurDir()}, args...)
+	cmdLine := []string{"go", "run", ".", "-toml", c.GetTomlPath(), "-current", c.GetCurDir()}
+	if *completion {
+		if c.GetCompletion() == "bash" {
+			cmdLine = append(cmdLine, "-completion")
+		} else {
+			return nil
+		}
+	}
+	cmdLine = append(cmdLine, args...)
 	return mytask.Exec(ctx, c.GetTaskDir(), cmdLine...)
 }
