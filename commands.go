@@ -85,8 +85,8 @@ func Completion(args []string) {
 		return
 	}
 	// command := args[0]
-	hint := flag.Arg(1)
-	// prevArg := flag.Arg(2)
+	hint := args[1]
+	// prevArg := args[2]
 	for _, verb := range GetVerbList() {
 		if strings.HasPrefix(verb, hint) {
 			fmt.Println(verb)
