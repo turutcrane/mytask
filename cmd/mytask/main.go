@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"log/slog"
 	"os"
@@ -15,6 +17,52 @@ import (
 
 var verbose = flag.Bool("v", false, "verbose flag")
 var completion = flag.Bool("completion", false, "completion flag for complete -C 'mytask -complete' mytask")
+var bootstrap = flag.Bool("bootstrap", false, "generate bootstrap code & mytask.toml")
+
+const mytaskToml = "mytask.toml"
+const mytaskDir = "mytask"
+const tomlContent = `#
+mytask_dir = "./mytask"
+completion = "bash"
+`
+const mytaskGo = "mytask.go"
+const goContent = `package main
+
+import (
+        "context"
+        "flag"
+        "log"
+        "os"
+        "os/signal"
+
+        "github.com/turutcrane/mytask"
+)
+
+func main() {
+        completion := flag.Bool("completion", false, "bash -completion command argToBeCompleted prevArg")
+        _, err := mytask.GetConfig()
+        if err != nil {
+                log.Panicln("T19:", err)
+        }
+
+        ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+        defer stop()
+
+        mytask.AddCommand("go-version", func(ctx context.Context, args []string) ([]string, error) {
+                return args, mytask.Exec(ctx, "", "go", "version")
+        })
+
+        if *completion {
+                mytask.Completion(flag.Args())
+                return
+        }
+
+        if err := mytask.RunTasks(ctx, flag.Args()); err != nil {
+                log.Fatalf("mytask Runtask: %v\n", err)
+        }
+}
+
+`
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
@@ -22,9 +70,33 @@ func main() {
 
 	flag.Parse()
 	args := flag.Args()
-
-	if err := doMytask(ctx, args); err != nil {
-		log.Fatalln(err)
+	if *bootstrap {
+		// Do nothing if file 'mytask.tom' or directory 'mytask' exists.
+		_, err := os.Stat(mytaskToml)
+		if !errors.Is(err, fs.ErrNotExist) {
+			log.Fatalf("%s is already exist\n", mytaskToml)
+		}
+		_, err = os.Stat(mytaskDir)
+		if !errors.Is(err, fs.ErrNotExist) {
+			log.Fatalf("Dir: %s is already exist\n", mytaskDir)
+		}
+		err = os.WriteFile(mytaskToml, []byte(tomlContent), 0644)
+		if err != nil {
+			log.Fatalf("create %s: %v", mytaskToml, err)
+		}
+		err = os.Mkdir(mytaskDir, 0755)
+		if err != nil {
+			log.Fatalf("mkdir %s: %v", mytaskDir, err)
+		}
+		err = os.WriteFile(filepath.Join(mytaskDir, mytaskGo), []byte(goContent), 0644)
+		if err != nil {
+			log.Fatalf("create %s: %v", mytaskGo, err)
+		}
+		return
+	} else {
+		if err := doMytask(ctx, args); err != nil {
+			log.Fatalln(err)
+		}
 	}
 }
 
@@ -50,10 +122,10 @@ func doMytask(ctx context.Context, args []string) error {
 		// 	return mytask.Exec(ctx, abs, cmdLine...)
 		// }
 
-		tomlFile := filepath.Join(root, "mytask.toml")
+		tomlFile := filepath.Join(root, mytaskToml)
 		if _, err0 := os.Stat(tomlFile); err0 == nil {
 			if *verbose {
-				slog.Info("mytask:", slog.String("mytask.toml", tomlFile))
+				slog.Info("mytask:", slog.String(mytaskToml, tomlFile))
 			}
 			var c mytask.Config
 			var err error
